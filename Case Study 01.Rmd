@@ -1,0 +1,433 @@
+---
+title: "DDS Project 1"
+author: "Randy Kim"
+date: "6/11/2021"
+output: html_document
+---
+
+#DDS Project 1
+## File
+
+```{r}
+Breweries = read.csv(file.choose(),header=TRUE)
+Beers = read.csv(file.choose(),header=TRUE)
+beers = Beers
+breweries = Breweries
+```
+
+```{r library}
+library(tidyverse)
+library(ggthemes)
+library(dplyr)
+library(ggmap)
+library(maps)
+library(caret)
+library(class)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(tidyr)
+library(usmap)
+library(highcharter)
+library(broom)
+
+```
+
+#1. How many breweries are present in each state?
+```{r}
+#Checking if there's any NA in the dataframe.
+sapply(breweries,function(x) sum(is.na(x)))
+breweries$State = as.factor(breweries$State)
+
+BreweriesByState = data.frame(table(breweries$State))
+colnames(BreweriesByState) = c("State","Breweries")
+BreweriesByState
+```
+
+#2. Merge beer data with the breweries data. Print the first 6 observations and the last six observations to check the merged file. (RMD only, this does not need to be included in the presentation or the deck.)
+```{r}
+BrewBeer = merge(beers,breweries,by.x="Brewery_id",by.y="Brew_ID")
+head(BrewBeer,6)
+tail(BrewBeer,6)
+
+breweries2=breweries
+colnames(breweries2)[1] = "Brewery_id"
+BrewBeer2 = merge(breweries2,beers,by="Brewery_id")
+BrewBeer2 <- na.omit(BrewBeer2)
+sapply(BrewBeer2,function(x) sum(is.na(x)))
+BrewBeer2 %>% group_by(State) %>% summarize(medianABV=median(ABV)*100, medianIBU=median(IBU))
+BrewBeer2
+```
+
+
+#3. Address the missing values in each column.
+```{r}
+sapply(BrewBeer,function(x) sum(is.na(x)))
+#need to create a chart or heatmap
+
+```
+
+#4. Compute the median alcohol content and international bitterness unit for each state. Plot a bar chart to compare.
+```{r}
+#filtering NA in ABV
+BrewBeerABV = data.frame(BrewBeer %>% filter(!is.na(ABV)) %>% group_by(State) %>% summarise(ABV=median(ABV)))
+BrewBeerABV$ABV = BrewBeerABV$ABV * 100
+BrewBeerABV$State = factor(BrewBeerABV$State, levels=BrewBeerABV$State)
+BrewBeerABV = BrewBeerABV[order(BrewBeerABV$State),]
+
+BrewBeerABV %>% ggplot(mapping=aes(x=State,y=ABV,fill=State)) + geom_bar(stat="identity",width=0.3,position="dodge") +
+  theme(legend.position="none",axis.text.x=element_text(angle=45,vjust=0.1))+
+  ggtitle("Median ABV by State") + ylab("Median ABV") + xlab("State")
+
+BrewBeerABV$code <- BrewBeerABV$State
+colnames(BrewBeerABV) = c("state","ABV","code")
+
+hchart(BrewBeerABV, "column", hcaes(x = state, y = ABV)) %>%
+  hc_title(text = "ABV by State")
+
+d=BrewBeerABV[order(BrewBeerABV$ABV),]
+hchart(d, "column", hcaes(x = state, y = ABV)) %>%
+  hc_title(text = "ABV by State")
+
+mapABV = BrewBeerABV[order(BrewBeerABV$ABV),] %>% select(state,ABV)
+mapABV$state = trimws(mapABV$state)
+mapABV$ABV = as.double(mapABV$ABV)
+
+plot_usmap(data=mapABV ,values = "ABV",labels=TRUE,offset=0.5, color="white") +
+  scale_fill_continuous(low="white",high="mediumblue",name="ABV") +
+  theme(legend.position = "bottom") +
+  labs(title = "ABV by State")
+
+################################################################################
+#
+#
+#
+#
+#reference: https://jkunst.com/highcharter/articles/maps.html
+#"hc-a2" - state.abb
+#State and ABV don't match
+
+ABVhcmap =hcmap("countries/us/us-all",
+                data=BrewBeerABV,
+                value="ABV",
+                joinby=c("hc-a2","code"),
+                name="ABV",
+                dataLabels=list(enabled=TRUE, format='{point.name}'),
+                borderColor="#FAFAFA",
+                borderWidth=0.1,
+                tooltip=list(valueDecimals=2,valueSuffix="%")
+                ) %>%
+   hc_title(text = "ABV by State")
+hc_colorAxis(ABVhcmap, 
+             min=3,
+             max=7,
+             minColor = 'white',
+             maxColor = 'mediumblue',
+             lineColor = 'black',
+             lineWidth = .1
+             )
+
+# hc-a2 data
+# mapdata <- get_data_from_map(download_map_data("custom/usa-and-canada"))
+# d=data.frame(mapdata)
+
+################################################################################
+#
+#
+#
+#
+#
+#imputation for ABV
+BrewBeerImp = BrewBeer
+BrewBeerImp$ABV[is.na(BrewBeerImp$ABV)] <- (mean(BrewBeerImp$ABV, na.rm = TRUE))
+sapply(BrewBeerImp,function(x) sum(is.na(x)))
+
+
+#median ABV
+ImpABV = data.frame(BrewBeerImp %>% group_by(State) %>% summarise(ABV=median(ABV)))
+ImpABV$ABV = ImpABV$ABV *100
+ImpABV$ABV = format(round(ImpABV$ABV,2),nsmall=2)
+colnames(ImpABV) = c("state","ABV")
+ImpABV$state = as.factor(ImpABV$state)
+ImpABV = ImpABV[order(ImpABV$ABV),]
+
+
+ImpABV %>% ggplot(mapping=aes(x=state,y=ABV,fill=state)) + geom_bar(stat="identity",width=0.3,position="dodge") +
+  theme(legend.position="none",axis.text.x=element_text(angle=45,vjust=0.1))+
+  ggtitle("Median ABV by State") + ylab("Median ABV") + xlab("State")
+
+
+mapdf = ImpABV[order(ImpABV$ABV),] %>% select(state,ABV)
+mapdf$state = trimws(mapdf$state)
+mapdf$ABV = as.double(mapdf$ABV)
+
+
+plot_usmap(data=mapdf ,values = "ABV",labels=TRUE,offset=0.5, color="white") +
+  scale_fill_continuous(low="white",high="mediumblue",name="ABV") +
+  theme(legend.position = "bottom") +
+  labs(title = "ABV by State (imputed)")
+#
+#
+#
+#
+#
+################################################################################
+
+
+#filtering NA in IBU
+BrewBeerIBU = data.frame(BrewBeer %>% filter(!is.na(IBU)) %>% group_by(State) %>% summarise(IBU=median(IBU)))
+BrewBeerIBU %>% ggplot(mapping=aes(x=State,y=IBU,fill=State)) + geom_bar(stat="identity",width=0.3,position="dodge") +
+  theme(legend.position="none",axis.text.x=element_text(angle=45,vjust=0.1))+
+  ggtitle("Median IBU by State") + ylab("Median IBU") + xlab("State")
+
+
+
+#State and IBU don't match
+IBUhcmap = hcmap("countries/us/us-all",
+                 data=BrewBeerIBU,
+                 value="IBU",
+                 joinby=c("hc-a2","code"),
+                 name="IBU",
+                 dataLabels = list(enabled=TRUE, format='{point.name}'),
+                 borderColor="#FAFAFA",borderWidth=0.1,
+                 tooltip=list(valueDecimals=2,valueSuffix="")
+                 ) %>%
+  hc_title(text = "IBU by State")
+hc_colorAxis(IBUhcmap, 
+             min=15,
+             max=65,
+             minColor = 'white',
+             maxColor = 'firebrick',
+             lineColor = 'black',
+             lineWidth = .1
+             )
+
+colnames(BrewBeerIBU) = c("state","IBU")
+mapIBU = BrewBeerIBU[order(BrewBeerIBU$IBU),] %>% select(state,IBU)
+mapIBU$state = trimws(mapIBU$state)
+mapIBU$IBU = as.double(mapIBU$IBU)
+#
+#
+#
+#
+#
+#########South Dakota doesn't have any data, so added 0.########################
+sd = data.frame("SD",0)
+colnames(sd) = c("state","IBU")
+mapIBU = rbind(mapIBU,sd)
+
+plot_usmap(data=mapIBU ,values = "IBU",labels=TRUE,offset=0.5, color="white") +
+  scale_fill_continuous(low="white",high="firebrick",name="ABV") +
+  theme(legend.position = "bottom") +
+  labs(title = "IBU by State")
+
+
+################################################################################
+#
+#
+#
+#
+#
+#imputation for IBU
+breweries3=breweries
+colnames(breweries3)[1] = "Brewery_id"
+BrewBeer3 = merge(breweries3,beers,by="Brewery_id")
+
+sapply(BrewBeer3,function(x) sum(is.na(x)))
+BrewBeer3$ABV[is.na(BrewBeer3$ABV)] <- (mean(BrewBeer3$ABV, na.rm = TRUE))
+BrewBeer3$IBU[is.na(BrewBeer3$IBU)] <- (mean(BrewBeer3$IBU, na.rm = TRUE))
+BrewBeer3 <- na.omit(BrewBeer3)
+BrewBeer3 %>% group_by(State) %>% summarize(medianABV=median(ABV)*100, medianIBU=median(IBU))
+
+ImpIBU = data.frame(BrewBeer3 %>% group_by(State) %>% summarise(IBU=median(IBU)))
+colnames(ImpIBU) = c("state","IBU")
+ImpIBU$state = as.factor(ImpIBU$state)
+ImpIBU = ImpIBU[order(ImpIBU$IBU),]
+
+
+ImpIBU %>% ggplot(mapping=aes(x=state,y=IBU,fill=state)) +
+  geom_bar(stat="identity",width=0.3,position="dodge") +
+  theme(legend.position="none",axis.text.x=element_text(angle=45,vjust=0.1))+
+  ggtitle("Median IBU by State") + ylab("Median IBU") + xlab("State")
+
+
+mapdf = ImpIBU[order(ImpIBU$IBU),] %>% select(state,IBU)
+mapdf$state = trimws(mapdf$state)
+mapdf$IBU = as.double(mapdf$IBU)
+
+
+plot_usmap(data=mapdf ,values = "IBU",labels=TRUE,offset=0.5, color="white") +
+  scale_fill_continuous(low="white",high="firebrick",name="IBU") +
+  theme(legend.position = "bottom") +
+  labs(title = "IBU by State (Imputed)")
+#
+#
+#
+#
+#
+################################################################################
+
+```
+
+#5. Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
+```{r}
+BrewBeer[which.max(BrewBeer$ABV),]
+#Colorado at 12.8%
+
+BrewBeer[which.max(BrewBeer$IBU),]
+#Oregon at 138
+
+```
+
+#6. Comment on the summary statistics and distribution of the ABV variable.
+```{r}
+#ABV
+quantile(BrewBeerABV$ABV)
+
+```
+
+- 75% of the ABV falls between 4% - 5.8%.
+- Budweiser is 5%
+
+
+#7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? Draw a scatter plot. Make your best judgment of a relationship and EXPLAIN your answer.
+```{r}
+##################BY STATE#########################
+#IBU
+quantile(BrewBeerIBU$IBU)
+BB = merge(BrewBeerABV,BrewBeerIBU, by="state")
+
+
+lm_fit = lm(ABV ~ IBU, data = BB)
+BB %>% ggplot(aes(x=ABV,y=IBU,color=state)) + 
+  geom_point() +
+  ggtitle("ABV vs IBU by State") +
+  theme(legend.position = "none") +
+  theme(legend.title = element_blank()) +
+  geom_smooth(method="lm",se=FALSE,color="black",size=0.1)
+
+
+#linear regression using hchart
+model = lm(ABV ~ IBU, data = BB)
+LM = augment(model) %>% arrange(IBU)
+
+hchart(BB,"scatter",hcaes(x=ABV,y=IBU,group=state)) %>%
+  hc_add_series(LM, type="line", hcaes(x=.fitted,y=IBU),name="Fit",id="fit") %>%
+  hc_legend(enabled=FALSE) %>%
+  hc_title(text = "ABV vs IBU by State")
+
+
+
+BrewBeer2 %>% ggplot(aes(x=ABV, y=IBU, color=ABV)) + 
+  geom_point() + 
+  geom_smooth() + 
+  labs(color="Ratio of ABV vs IBU") +
+  ggtitle("ABV vs IBU")
+
+
+
+
+```
+There is a moderate positive correlation between ABV and IBU as we can see from the upward linear regression.
+
+
+
+#8. Budweiser would also like to investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) and other types of Ale (any beer with “Ale” in its name other than IPA).  You decide to use KNN classification to investigate this relationship.  Provide statistical evidence one way or the other. You can of course assume your audience is comfortable with percentages … KNN is very easy to understand conceptually.
+
+#In addition, while you have decided to use KNN to investigate this relationship (KNN is required) you may also feel free to supplement your response to this question with any other methods or techniques you have learned.  Creativity and alternative solutions are always encouraged.
+
+```{r}
+####################kNN for filtered IBU########################################
+ipas = filter(BrewBeer2, grepl("Ale|IPA",Style))
+ipas = ipas %>% mutate(ipasType = ifelse(grepl("IPA",Style),"IPA","Ale"))
+
+set.seed(10)
+splitPerc = 0.7
+iterations = 100
+nums = 100
+masterAcc = matrix(nrow = iterations, ncol = nums)
+
+for (j in 1:iterations)
+{
+  accs = data.frame(accuracy = numeric(100), k=numeric(100))
+  trainIndices = sample(1:dim(ipas)[1],round(splitPerc*dim(ipas)[1]))
+  train = ipas[trainIndices,]
+  test = ipas[-trainIndices,]
+  for (i in 1:nums)
+  {
+    classifications = knn(train[,c(7,8)],test[,c(7,8)],as.factor(train$ipasType),prob=TRUE,k=i)
+    CM = confusionMatrix(table(as.factor(test$ipasType),classifications))
+    masterAcc[j,i] = CM$overall[1]
+  }
+}
+
+CM
+masterAcc
+meanAcc=colMeans(masterAcc)
+{plot(seq(1,nums,1),meanAcc,type="l")
+abline(v=which.max(meanAcc),col="red",lwd=1)
+abline(h=max(meanAcc),col="red",lwd=1)}
+
+which.max(meanAcc)
+max(meanAcc)
+
+
+#######################KNN for imputed average IBU##############################
+breweries3=breweries
+colnames(breweries3)[1] = "Brewery_id"
+BrewBeer3 = merge(breweries3,beers,by="Brewery_id")
+
+sapply(BrewBeer3,function(x) sum(is.na(x)))
+BrewBeer3$ABV[is.na(BrewBeer3$ABV)] <- (mean(BrewBeer3$ABV, na.rm = TRUE))
+BrewBeer3$IBU[is.na(BrewBeer3$IBU)] <- (mean(BrewBeer3$IBU, na.rm = TRUE))
+BrewBeer3 <- na.omit(BrewBeer3)
+BrewBeer3 %>% group_by(State) %>% summarize(medianABV=median(ABV)*100, medianIBU=median(IBU))
+
+ipas2 = filter(BrewBeer3, grepl("Ale|IPA",Style))
+ipas2 = ipas2 %>% mutate(ipasType = ifelse(grepl("IPA",Style),"IPA","Ale"))
+
+set.seed(10)
+splitPerc = 0.7
+iterations = 100
+nums = 100
+masterAcc2 = matrix(nrow = iterations, ncol = nums)
+
+for (j in 1:iterations)
+{
+  accs = data.frame(accuracy = numeric(100), k=numeric(100))
+  trainIndices = sample(1:dim(ipas2)[1],round(splitPerc*dim(ipas2)[1]))
+  train2 = ipas2[trainIndices,]
+  test2 = ipas2[-trainIndices,]
+  for (i in 1:nums)
+  {
+    classifications = knn(train2[,c(7,8)],test2[,c(7,8)],as.factor(train2$ipasType),prob=TRUE,k=i)
+    CM2 = confusionMatrix(table(as.factor(test2$ipasType),classifications))
+    masterAcc2[j,i] = CM2$overall[1]
+  }
+}
+
+CM2
+masterAcc2
+meanAcc2=colMeans(masterAcc2)
+{plot(seq(1,nums,1),meanAcc2,type="l")
+abline(v=which.max(meanAcc2),col="red",lwd=1)
+abline(h=max(meanAcc2),col="red",lwd=1)}
+
+which.max(meanAcc2)
+max(meanAcc2)
+```
+
+- When I removed the NA the accuracy for kNN was higher, 85.87%, however, when I imputed the both
+IBU and ABV, the accuracy went down to 79.57%. Which it's still way better than any kNN tests I have done
+so far.
+
+k=5 for both
+```{r}
+classifications1 = knn(train[,c(7,8)],test[,c(7,8)],as.factor(train$ipasType),prob=TRUE,k=5)
+CM3 = confusionMatrix(table(as.factor(test$ipasType),classifications1))
+CM3
+
+classificationsImp = knn(train2[,c(7,8)],test2[,c(7,8)],as.factor(train2$ipasType),prob=TRUE,k=i)
+CMImp = confusionMatrix(table(as.factor(test2$ipasType),classificationsImp))
+CMImp
+```
