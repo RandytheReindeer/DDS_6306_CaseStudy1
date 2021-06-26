@@ -275,7 +275,7 @@ combined_df_nB %>% ggplot(aes(x=ABV, y=IBU, color=ABV)) +
 #check for 'India Pale Ale' instead of 'IPA'
 sum(grepl("India Pale Ale",combined_df_nB$Style)) - sum(grepl("India Pale Ale",combined_df_nB$Style) & grepl("IPA", combined_df_nB$Style))
 
-
+#isolate IPAs & non-IPA Ales / note beer-style as iapsType
 ipas = filter(combined_df_nB, grepl("Ale|IPA",Style))
 ipas = ipas %>% mutate(ipasType = ifelse(grepl("IPA",Style),"IPA","Ale"))
 
