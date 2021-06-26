@@ -14,7 +14,7 @@ The main purpose of this project was to strengthen our communication skills with
 
 ### CodeBook
 * [Case Study](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/Codebook/DDS%20Case%20Study1.Rmd) - Rmakrdown file with detailed analysis
-* [Case Study:Knit HTML]() - HTML file
+* [Case Study:Knit HTML](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/Codebook/Draft-Case-Study-01.html) - HTML file
 
 ### CaseStudy Requirement
 * [Requirement](https://github.com/generalshermanw/DDS_6306_CaseStudy1/tree/main/Case%20Study%20Reiqurement) - Contains questions and rubric
