@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #load libraries
-```{r library, include=T, error=F, message=F, results='hide'}
+```{r library, include=T, error=F, message=F, warning=F, results='hide'}
 library(tidyverse)
 library(ggthemes)
 library(dplyr)
@@ -42,7 +42,7 @@ head(beers, n = 5)
 ```
 
 #1. How many breweries are present in each state?
-```{r}
+```{r, warning=F}
 # check structure of breweries df
 str(breweries)
 
@@ -102,7 +102,7 @@ colnames(dfBrews) = c("Brewery_ID","Brewery_Name","City","State","Region","Beer_
 # see nulls in merged data
 sapply(dfBrews,function(x) sum(is.na(x)))
 
-# show breakdown % missing
+# show breakdown of % missing for each state
 na_byState <- data.frame()
 for(i in st_reg$State){
   na_byState[i,1]=length(which(grepl(i,dfBrews$State)))
@@ -157,8 +157,8 @@ for(j in 1:iterations){
   CM <- confusionMatrix(t1)
   masterAcc[j] = CM$overall[1]
 }
-colMeans(masterAcc)
-var(masterAcc)
+colMeans(masterAcc) #average accuracy across the 150 iterations
+var(masterAcc)[1] #measure of the variance across the 150 iterations
 
 # CM
 
@@ -170,16 +170,15 @@ for(i in 1:nrow(ibu_unknown_nB)){
   ibu_unknown_nB$IBU[i] <- imp[i]
 }
 
-# attaching the predictions for unknown to know IBUs 
+# attaching the predictions for unknown to known IBUs 
 combined_df_nB <- rbind(ibu_known,ibu_unknown_nB)
 combined_df_nB <- combined_df_nB[order(combined_df_nB$Brewery_ID),]
 
 head(combined_df_nB, n = 5)
-
 ```
 
 #4. Compute the median alcohol content and international bitterness unit for each state. Plot a bar chart to compare.
-```{r}
+```{r, warning=F, message=F}
 sapply(combined_df_nB,function(x) sum(is.na(x)))
 
 BrewBeerABV = data.frame(combined_df_nB %>% group_by(State, Region) %>% summarise(ABV=median(ABV)))
@@ -234,7 +233,7 @@ combined_df_nB_2 %>% ggplot(aes(x = hold, y = ABV)) + geom_violin(fill = "blue")
 
 zeros <- sum(ifelse(combined_df_nB$ABV==0,1,0))
 ```
-The ABV variable had `r zeros` imputed zeros. The error rate for this is `r zeros/length(combined_df_nB$ABV)*100`%. Additionally, 75% of the ABV falls between 5% - 6.7%. A general note of interest is that Budweiser has an ABV of 5%.
+The ABV variable had `r zeros` imputed zeros. The error rate for this is `r round(zeros/length(combined_df_nB$ABV)*100,2)`%. Additionally, 75% of the ABV falls between 5% - 6.7%. A general note of interest is that Budweiser has an ABV of 5%.
 
 
 #7. Is there an apparent relationship between the bitterness of the beer and its alcoholic content? Draw a scatter plot. Make your best judgment of a relationship and EXPLAIN your answer.
@@ -293,7 +292,7 @@ quantile(combined_df_nB$IBU)
 
 ```
 We can see that there is a positive correlation between IBU and ABV. We can see a big cluster around 5% ABV, and we predict that these are regular 12 ounces of beers which, according to NIAAA in the U.S., contain between 4-7% ABV, with the average being 5%. Anything above estimates to be malt liquor which averages to be 7% ABV.
-Just based on this we couldn’t determine the causation, so we decided to compare by Ale and IPAs. We can see that the majority of Ales have low ABV and IBU while the majority of IPAs have high ABV and IBU. Budweiser has average 5% ABV and 7 IBU; therefore, we may carefully suggest focusing on producst with ABVs within range of 5.6 to 5.8% and IBUs of 19 to 64. This range might be more competitive in the existing market. 
+Just based on this we couldn’t determine the causation, so we decided to compare by Ale and IPAs. We can see that the majority of Ales have low ABV and IBU while the majority of IPAs have high ABV and IBU. Budweiser has average 5% ABV and 7 IBU; therefore, we may carefully suggest focusing on products with ABVs within range of 5.6 to 5.8% and IBUs of 19 to 64. This range might be more competitive in the existing market. 
 
 
 #8. Budweiser would also like to investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) and other types of Ale (any beer with “Ale” in its name other than IPA).  You decide to use KNN classification to investigate this relationship.  Provide statistical evidence one way or the other. You can of course assume your audience is comfortable with percentages … KNN is very easy to understand conceptually.
@@ -352,16 +351,17 @@ abline(h=max(meanAcc),col="red",lwd=1)}
 
 # internal cross validation for knn
 classifications = knn.cv(ipas[,c(8,9)], ipas$ipasType, prob = TRUE, k = 38)
-confusionMatrix(table(classifications, as.factor(ipas$ipasType)))
+CM <- confusionMatrix(table(classifications, as.factor(ipas$ipasType)))
+CM
 # Accuracy = 81.8% 
 # Sensitivity = 85.4%
 # Specificity = 75.7%
 
 ```
-From external cross-validations, the optimal number of nearest neighbors is `r which.max(meanAcc)`. From this, we checked our accuracy, sensitivity, and specificity of predicting IPA versus non-IPA ales. The accuracy for predicting IPA with internal cross-validation based on ABV and IBU was found to be `r round(CM$overall[[1]],4)`, the specificity was `r round(CM$byClass[[2]],4)`, and the sensitivity was `r round(CM$byClass[[1]],4)`.
+From external cross-validations, the optimal number of nearest neighbors is `r which.max(meanAcc)`. From this, we checked our accuracy, sensitivity, and specificity of predicting IPA versus non-IPA ales. The accuracy for predicting IPA with internal cross-validation based on ABV and IBU was found to be `r round(CM$overall[[1]],4)*100`%, the specificity was `r round(CM$byClass[[2]],4)*100`%, and the sensitivity was `r round(CM$byClass[[1]],4)*100`%.
 
 #9
-```{r}
+```{r, warning=F}
 ## table(combined_df_nB$Style) #checking list of styles
 sum(ifelse(combined_df_nB$Style=="",1,0)) #finding the unidentified styles
 
@@ -399,4 +399,5 @@ plot_usmap(regions="states",
   labs(title = "Preferred Beer Style\nby State") +
   scale_fill_manual(values=beer_colors)
 ```
+
 The graphic here depicts majority preference by state for certain styles of beers. When ties occurred, we gave the win to the most prevalent beer-type nationally. The focus of our analysis here was to present a by-state retail option. With additional supply-chain information, we may be able to help optimize future distribution or optimization efforts.
