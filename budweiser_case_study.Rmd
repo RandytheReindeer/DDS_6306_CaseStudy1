@@ -134,6 +134,18 @@ combined_df <- dfBrews
 ibu_known <- combined_df[which(!is.na(combined_df$IBU)),]
 ibu_unknown <- combined_df[which(is.na(combined_df$IBU)),]
 
+############# Visualizations ##################################
+#correlation between numerical vectors - weak association
+ibu_known %>% select_if(is.numeric) %>% cor() %>% corrplot::corrplot()
+
+#visualizing strongest relationship between IBU and categorical values
+plot_ly(ibu_known, x= ~reorder(Style,IBU), y= ~IBU) %>%
+add_boxplot() %>%
+layout(title="IBU by Beer Style")
+#visual comparison with ABV and Style (same order as IBU-relationship)
+plot_ly(ibu_known, x= ~reorder(Style,IBU), y= ~ABV) %>%
+add_boxplot() %>%
+layout(title="ABV by Beer Style\nordered by increasing IBU")
 
 ###############################################################
 # Training nB for classifying IBU
