@@ -16,9 +16,6 @@ This analysis will review our findings from EDA of the combined beers and brewer
 * [Case Study](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/CodeBook/budweiser_case_study.Rmd) - Rmakrdown file with detailed analysis
 * [Case Study:Knit HTML](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/CodeBook/budweiser_case_study.html) - HTML file
 
-### CaseStudy Requirement
-* [Requirement](https://github.com/generalshermanw/DDS_6306_CaseStudy1/tree/main/Case%20Study%20Reiqurement) - Contains questions and rubric
-
 ### Power Point
 * [Case Study Power Point](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/budweiser_presentation.pptx)
 
