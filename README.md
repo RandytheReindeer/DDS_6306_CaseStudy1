@@ -18,3 +18,6 @@ The main purpose of this project was to strengthen our communication skills with
 
 ### CaseStudy Requirement
 * [Requirement](https://github.com/generalshermanw/DDS_6306_CaseStudy1/tree/main/Case%20Study%20Reiqurement) - Contains questions and rubric
+
+### Power Point
+* [Case Study Power Point](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/budweiser_presentation.pptx)
