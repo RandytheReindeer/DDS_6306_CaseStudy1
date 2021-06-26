@@ -5,7 +5,7 @@
 - Randy Kim       randyk@mail.smu.edu
 
 ## Introduction
-The main purpose of this project was to strengthen our communication skills within the group and analyze the given data set. We used machine learning to replace the missing data and statistical backgroud to explore the findings. We analyzed the data sets on median IBU, median ABV, and style by region to find out what we could do to improve for the company, Budweiser.
+This analysis will review our findings from EDA of the combined beers and breweries data sets, and a KNN classification model for categorizing a beer as Ale or IPA. We used machine learning to replace the missing data and statistical backgroud to explore the findings. We analyzed the data sets on median IBU, median ABV, and style by region to find out what we could do to improve for the company, Budweiser.
 
 ## Structure of Repository
 ### Data Source
