@@ -1,8 +1,8 @@
 # DDS_6306_CaseStudy1
 ## Contributors: 
-Kati Schuerger  kschuerger@mail.smu.edu
-Will Sherman    wsherman@mail.smu.edu
-Randy Kim       randyk@mail.smu.edu
+- Kati Schuerger  kschuerger@mail.smu.edu
+- Will Sherman    wsherman@mail.smu.edu
+- Randy Kim       randyk@mail.smu.edu
 
 ## Introduction
 The main purpose of this project was to strengthen our communication skills within the group and analyze the given data set. We used machine learning to replace the missing data and statistical backgroud to explore the findings. We analyzed the data sets on median IBU, median ABV, and style by region to find out what we could do to improve for the company, Budweiser.
