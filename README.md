@@ -21,3 +21,6 @@ The main purpose of this project was to strengthen our communication skills with
 
 ### Power Point
 * [Case Study Power Point](https://github.com/generalshermanw/DDS_6306_CaseStudy1/blob/main/budweiser_presentation.pptx)
+
+## Conclusion
+There may be an opportunity for Budweiser to consider increasing their ABV - perhaps in only certain states; or possibly introducing a new product that puts a spin on the classic beverage, to meet the consumer preferences of customers in states such as Colorado and Oregon, the states with the highest ABV and IBU respectively.
